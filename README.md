@@ -20,3 +20,9 @@ npm run dev      # Entwicklungsserver
 npm run build    # Produktions-Build
 npm run lint     # Linting
 ```
+
+## KI-Discovery für eigene Komponenten
+
+Eigene Komponenten können automatisch befüllt werden: Name und Kategorie eintragen, „Automatisch füllen (KI)“ klicken – ein KI-Modell (Mistral) generiert Recovery-Fähigkeit, Ausfallauswirkungen, Recovery-Methodik, DR-Plan-Schritte und Doku-URL im Stil des eingebauten Katalogs. Die Felder bleiben vor dem Speichern editierbar.
+
+Dafür ist ein eigener Mistral-API-Schlüssel nötig (kostenlos erstellbar unter [console.mistral.ai](https://console.mistral.ai/api-keys)). Der Schlüssel wird ausschließlich lokal im Browser (localStorage) gehalten und direkt an `api.mistral.ai` gesendet – er landet weder im Code noch im Repository.

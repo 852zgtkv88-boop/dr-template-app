@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { categories, components } from './data/catalog.js'
 import { generateKonzept, generatePlan } from './generator.js'
 import MarkdownView from './MarkdownView.jsx'
+import { discoverComponent, MODELS } from './discovery.js'
 import './App.css'
 
 const STORAGE_KEY = 'dr-template-app:custom-components'
+const KEY_STORAGE = 'dr-template-app:mistral-key'
+const MODEL_STORAGE = 'dr-template-app:mistral-model'
 
 const byCategory = (catId, all) => all.filter((c) => c.category === catId)
 
@@ -51,10 +54,27 @@ export default function App() {
   const [customs, setCustoms] = useState(loadCustoms)
   const [form, setForm] = useState(emptyCustom)
   const [editingId, setEditingId] = useState(null)
+  const [apiKey, setApiKey] = useState(
+    () => localStorage.getItem(KEY_STORAGE) ?? ''
+  )
+  const [model, setModel] = useState(
+    () => localStorage.getItem(MODEL_STORAGE) ?? 'mistral-small-latest'
+  )
+  const [discovering, setDiscovering] = useState(false)
+  const [discoveryError, setDiscoveryError] = useState('')
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(customs))
   }, [customs])
+
+  useEffect(() => {
+    if (apiKey) localStorage.setItem(KEY_STORAGE, apiKey)
+    else localStorage.removeItem(KEY_STORAGE)
+  }, [apiKey])
+
+  useEffect(() => {
+    localStorage.setItem(MODEL_STORAGE, model)
+  }, [model])
 
   const all = useMemo(() => [...components, ...customs], [customs])
 
@@ -81,6 +101,46 @@ export default function App() {
 
   const setFormValue = (key) => (e) =>
     setForm((f) => ({ ...f, [key]: e.target.value }))
+
+  const runDiscovery = async () => {
+    if (!form.name.trim()) {
+      setDiscoveryError('Bitte zuerst einen Namen eingeben.')
+      return
+    }
+    if (!apiKey.trim()) {
+      setDiscoveryError(
+        'Bitte zuerst einen Mistral-API-Schlüssel hinterlegen (Abschnitt „KI-Discovery“).'
+      )
+      return
+    }
+    setDiscovering(true)
+    setDiscoveryError('')
+    try {
+      const categoryLabel =
+        categories.find((cat) => cat.id === form.category)?.label ?? ''
+      const result = await discoverComponent(
+        form.name.trim(),
+        categoryLabel,
+        apiKey.trim(),
+        model
+      )
+      setForm((f) => ({
+        ...f,
+        faehigkeit: result.faehigkeit || f.faehigkeit,
+        auswirkung: result.auswirkung || f.auswirkung,
+        methodik: result.methodik || f.methodik,
+        schritte: result.schritte.join('\n') || f.schritte,
+        docs: result.docs || f.docs,
+      }))
+    } catch (err) {
+      setDiscoveryError(
+        err.message ||
+          'Discovery fehlgeschlagen. Bitte Netzwerk und API-Schlüssel prüfen.'
+      )
+    } finally {
+      setDiscovering(false)
+    }
+  }
 
   const saveCustom = (e) => {
     e.preventDefault()
@@ -229,6 +289,44 @@ export default function App() {
           </ul>
 
           <h2>4. Eigene Komponente hinzufügen</h2>
+          <details className="settings">
+            <summary>KI-Discovery: Mistral-API-Schlüssel</summary>
+            <div className="settings-body">
+              <label>
+                API-Schlüssel (bleibt nur lokal im Browser gespeichert)
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="z. B. von console.mistral.ai"
+                  autoComplete="off"
+                />
+              </label>
+              <label>
+                Modell
+                <select value={model} onChange={(e) => setModel(e.target.value)}>
+                  {MODELS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="hint">
+                Der Schlüssel wird ausschließlich im Browser gehalten und direkt
+                an api.mistral.ai gesendet – er landet weder im Code noch im
+                Repository. Schlüssel kostenlos erstellbar unter{' '}
+                <a
+                  href="https://console.mistral.ai/api-keys"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  console.mistral.ai
+                </a>
+                .
+              </p>
+            </div>
+          </details>
           <form className="custom-form" onSubmit={saveCustom}>
             <label>
               Name
@@ -294,6 +392,14 @@ export default function App() {
               />
             </label>
             <div className="custom-form-actions">
+              <button
+                type="button"
+                className="primary"
+                onClick={runDiscovery}
+                disabled={discovering}
+              >
+                {discovering ? 'Discovery läuft…' : 'Automatisch füllen (KI)'}
+              </button>
               <button type="submit" className="primary">
                 {editingId ? 'Änderungen speichern' : 'Komponente hinzufügen'}
               </button>
@@ -310,6 +416,7 @@ export default function App() {
                 </button>
               )}
             </div>
+            {discoveryError && <p className="error">{discoveryError}</p>}
           </form>
 
           {customs.length > 0 && (
