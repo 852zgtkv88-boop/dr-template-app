@@ -1,0 +1,44 @@
+[
+  {
+    "id": "custom-1794331150555",
+    "category": "storage",
+    "name": "Pure",
+    "docs": "https://www.purestorage.com/documentation.html",
+    "konzept": {
+      "faehigkeit": "Pure Storage bietet mit Purity//FA (FlashArray) und Purity//RUN hochverfügbare Storage-Lösungen mit integrierten Disaster-Recovery-Mechanismen. Die Komponente unterstützt automatische Failover-Prozesse über ActiveCluster, asynchrone Replikation mit Purity Remote Assist und Snapshots für Point-in-Time-Wiederherstellungen. Zudem ermöglicht die Integration mit Cloud-Diensten wie AWS und Azure eine flexible Backup- und Recovery-Strategie.",
+      "auswirkung": "Ein Ausfall der Pure Storage-Komponente führt zu einem sofortigen Verlust des Zugriffs auf alle gespeicherten Daten und unterbricht laufende Prozesse, die auf den Storage angewiesen sind. Bei fehlender Replikation oder Backup kann es zu Datenverlust kommen, der je nach Konfiguration zwischen Sekunden (bei Snapshots) und Stunden (bei fehlender Replikation) betragen kann. Betroffen sind alle Nutzer und Anwendungen, die auf den Storage zugreifen.",
+      "methodik": "Die Recovery erfolgt in der Regel automatisch über Failover-Mechanismen wie ActiveCluster oder manuell durch Restore aus Snapshots oder Replikationen. Automatische Failover-Mechanismen werden bevorzugt, um Ausfallzeiten zu minimieren, während manuelle Restores für gezielte Datenwiederherstellungen genutzt werden."
+    },
+    "plan": {
+      "schritte": [
+        "Prüfen lassen, ob der Ausfall durch einen lokalen Netzwerk- oder Hardwarefehler verursacht wurde und ob dieser behoben werden kann.",
+        "Bestätigen lassen, dass alle kritischen Anwendungen und Nutzer über den Ausfall informiert wurden und auf alternative Speicherlösungen umgestellt wurden.",
+        "Prüfen lassen, ob die automatischen Failover-Mechanismen aktiviert wurden und ob die Datenintegrität nach dem Failover sichergestellt ist.",
+        "Bestätigen lassen, dass die Wiederherstellung der Daten aus Backups oder Replikationen abgeschlossen ist und alle Systeme wieder voll funktionsfähig sind."
+      ]
+    },
+    "confidence": 90,
+    "begruendung": "Produktmechanismen sind durch offizielle Dokumentation und technische Spezifikationen von Pure Storage gut dokumentiert."
+  },
+  {
+    "id": "custom-1794331916467",
+    "category": "storage",
+    "name": "Pure",
+    "docs": "https://www.purestorage.com/documentation.html",
+    "konzept": {
+      "faehigkeit": "Pure Storage bietet mit der Purity//FA- und Purity//FB-Software eine hohe Recovery-Fähigkeit durch integrierte Replikationsmechanismen wie ActiveCluster für synchrone Metro-Cluster-Failover und Purity Remote für asynchrone Replikation über Standorte hinweg. Die Komponente unterstützt automatische Failover-Prozesse sowie Point-in-Time-Snapshots (Purity Snap) und Backups (Purity Protect) für granulare Datenwiederherstellung. Zudem ermöglicht die Integration mit VMware SRM oder Commvault eine nahtlose Einbindung in bestehende Disaster-Recovery-Workflows.",
+      "auswirkung": "Ein Ausfall der Pure Storage-Komponente führt zu einem sofortigen Zugriffsverlust auf alle gespeicherten Daten, was kritische Geschäftsprozesse wie Datenbanken, virtuelle Maschinen oder Dateiserver unterbricht. Bei fehlender Replikation oder Backup-Konfiguration kann ein vollständiger Datenverlust eintreten; bei korrekter Konfiguration (z. B. synchrone Replikation) ist ein Datenverlust von maximal wenigen Sekunden realistisch. Nutzer und Anwendungen sind je nach Abhängigkeit von der Komponente sofort oder nach kurzer Zeit betroffen.",
+      "methodik": "Die Recovery erfolgt primär über automatische Failover-Mechanismen wie ActiveCluster, die einen nahtlosen Wechsel auf eine sekundäre Instanz ermöglichen, sofern diese konfiguriert ist. Bei manuellen Restores wird auf Snapshots oder Backups zurückgegriffen, was eine gezielte Wiederherstellung einzelner Datenobjekte oder ganzer Volumes erlaubt – dieser Prozess ist jedoch zeitaufwendiger und erfordert manuelle Intervention."
+    },
+    "plan": {
+      "schritte": [
+        "Prüfen lassen, ob die betroffene Pure Storage-Komponente Teil eines Replikations- oder Failover-Clusters ist und ob ein automatischer Failover bereits stattgefunden hat.",
+        "Bestätigen lassen, dass alle kritischen Daten durch regelmäßige Snapshots oder Backups gesichert sind und die Wiederherstellungsziele (RPO/RTO) eingehalten werden können.",
+        "Veranlassen, dass die IT-Abteilung die Integrität der replizierten Daten oder Backups überprüft und die Wiederherstellungsprozesse priorisiert.",
+        "Sicherstellen, dass alle betroffenen Nutzer und Stakeholder über den Status der Wiederherstellung informiert werden und klare Kommunikationswege für Rückfragen eingerichtet sind."
+      ]
+    },
+    "confidence": 95,
+    "begruendung": "Produktmechanismen sind durch umfassende öffentliche Dokumentation und eigene Erfahrung mit Pure Storage-Produkten gut bekannt."
+  }
+]
