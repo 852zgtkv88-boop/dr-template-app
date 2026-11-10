@@ -378,3 +378,42 @@ textarea:focus {
   font-size: 0.85rem;
   margin: 0;
 }
+
+.confidence {
+  font-size: 0.8rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+
+.conf-high {
+  color: #1a7f37;
+  background: #e6f4ea;
+}
+
+.conf-mid {
+  color: #9a6700;
+  background: #fff8c5;
+}
+
+.conf-low {
+  color: #b3261e;
+  background: #fce8e6;
+}
+
+.selected-list small em {
+  font-style: normal;
+}
+
+.conf-high em,
+em.conf-high {
+  color: #1a7f37;
+}
+
+em.conf-mid {
+  color: #9a6700;
+}
+
+em.conf-low {
+  color: #b3261e;
+}

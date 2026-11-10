@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { categories, components } from './data/catalog.js'
 import { generateKonzept, generatePlan } from './generator.js'
 import MarkdownView from './MarkdownView.jsx'
-import { discoverComponent, MODELS } from './discovery.js'
+import { discoverComponent } from './discovery.js'
 import './App.css'
 
 const STORAGE_KEY = 'dr-template-app:custom-components'
 const KEY_STORAGE = 'dr-template-app:mistral-key'
-const MODEL_STORAGE = 'dr-template-app:mistral-model'
 
 const byCategory = (catId, all) => all.filter((c) => c.category === catId)
 
@@ -45,6 +44,8 @@ const emptyCustom = {
   auswirkung: '',
   methodik: '',
   schritte: '',
+  confidence: null,
+  begruendung: '',
 }
 
 export default function App() {
@@ -57,9 +58,6 @@ export default function App() {
   const [apiKey, setApiKey] = useState(
     () => localStorage.getItem(KEY_STORAGE) ?? ''
   )
-  const [model, setModel] = useState(
-    () => localStorage.getItem(MODEL_STORAGE) ?? 'mistral-small-latest'
-  )
   const [discovering, setDiscovering] = useState(false)
   const [discoveryError, setDiscoveryError] = useState('')
 
@@ -71,10 +69,6 @@ export default function App() {
     if (apiKey) localStorage.setItem(KEY_STORAGE, apiKey)
     else localStorage.removeItem(KEY_STORAGE)
   }, [apiKey])
-
-  useEffect(() => {
-    localStorage.setItem(MODEL_STORAGE, model)
-  }, [model])
 
   const all = useMemo(() => [...components, ...customs], [customs])
 
@@ -121,8 +115,7 @@ export default function App() {
       const result = await discoverComponent(
         form.name.trim(),
         categoryLabel,
-        apiKey.trim(),
-        model
+        apiKey.trim()
       )
       setForm((f) => ({
         ...f,
@@ -131,6 +124,8 @@ export default function App() {
         methodik: result.methodik || f.methodik,
         schritte: result.schritte.join('\n') || f.schritte,
         docs: result.docs || f.docs,
+        confidence: result.confidence,
+        begruendung: result.begruendung,
       }))
     } catch (err) {
       setDiscoveryError(
@@ -161,6 +156,8 @@ export default function App() {
           .map((s) => s.trim())
           .filter(Boolean),
       },
+      confidence: form.confidence,
+      begruendung: form.begruendung,
     }
     setCustoms((prev) =>
       editingId ? prev.map((c) => (c.id === editingId ? entry : c)) : [...prev, entry]
@@ -179,6 +176,8 @@ export default function App() {
       auswirkung: c.konzept.auswirkung,
       methodik: c.konzept.methodik,
       schritte: c.plan.schritte.join('\n'),
+      confidence: c.confidence ?? null,
+      begruendung: c.begruendung ?? '',
     })
   }
 
@@ -272,6 +271,22 @@ export default function App() {
                   <strong>{c.name}</strong>
                   <small>
                     {c.id.startsWith('custom-') && <em>Eigene Komponente · </em>}
+                    {c.id.startsWith('custom-') &&
+                      c.confidence !== null &&
+                      c.confidence !== undefined && (
+                        <em
+                          className={
+                            c.confidence >= 80
+                              ? 'conf-high'
+                              : c.confidence >= 50
+                                ? 'conf-mid'
+                                : 'conf-low'
+                          }
+                          title={c.begruendung}
+                        >
+                          Konfidenz {c.confidence}% ·{' '}
+                        </em>
+                      )}
                     {c.docs ? (
                       <a href={c.docs} target="_blank" rel="noreferrer">
                         Produktdokumentation
@@ -303,14 +318,7 @@ export default function App() {
                 />
               </label>
               <label>
-                Modell
-                <select value={model} onChange={(e) => setModel(e.target.value)}>
-                  {MODELS.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
+                Modell: mistral-small-latest (fix eingestellt)
               </label>
               <p className="hint">
                 Der Schlüssel wird ausschließlich im Browser gehalten und direkt
@@ -391,6 +399,19 @@ export default function App() {
                 placeholder={'Failover-Status prüfen lassen\nAnwendungen neu verbinden\nFachbereich abnehmen lassen'}
               />
             </label>
+            {form.confidence !== null && (
+              <p
+                className={`confidence ${
+                  form.confidence >= 80
+                    ? 'conf-high'
+                    : form.confidence >= 50
+                      ? 'conf-mid'
+                      : 'conf-low'
+                }`}
+              >
+                Konfidenz der KI-Angaben: {form.confidence}% – {form.begruendung}
+              </p>
+            )}
             <div className="custom-form-actions">
               <button
                 type="button"

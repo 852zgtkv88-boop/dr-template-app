@@ -1,8 +1,4 @@
-const MODELS = [
-  { id: 'mistral-small-latest', label: 'mistral-small (schnell, günstig)' },
-  { id: 'mistral-medium-latest', label: 'mistral-medium (ausgewogen)' },
-  { id: 'mistral-large-latest', label: 'mistral-large (höchste Qualität)' },
-]
+const MODEL = 'mistral-small-latest'
 
 const API_URL = 'https://api.mistral.ai/v1/chat/completions'
 
@@ -18,11 +14,13 @@ Erzeuge folgende Felder auf Deutsch:
 - "methodik": 1-2 Sätze zur Recovery-Methodik, typischerweise automatischer Failover oder manueller Restore mit kurzem Warum.
 - "schritte": Array mit genau 4 nicht-technischen Wiederanlaufschritten für einen Manager, der den Wiederanlauf steuert, aber keine technischen Details benötigt. Jeder Schritt ein vollständiger Satz, im Stil "Prüfen lassen..."/"Bestätigen lassen...". Keine Befehle, keine Tool-Namen.
 - "docs": die beste offizielle URL der Produktdokumentation des Herstellers (nur eine URL, ohne Erklärung).
+- "confidence": eine ganze Zahl von 0 bis 100, die angibt, wie zuverlässig deine Angaben für genau dieses Produkt sind (100 = sehr sicher, Produkt und seine DR-Mechanismen sind dir gut bekannt; 50 = überwiegend auf allgemeines Kategoriewissen gestützt; unter 30 = Produkt praktisch unbekannt).
+- "begruendung": ein kurzer Satz, der die Confidence-Zahl erklärt (z. B. "Produktmechanismen gut dokumentiert" oder "Angaben auf Kategorieüblichkeiten gestützt, Produkt nicht eindeutig identifiziert").
 
-Antworte ausschließlich als JSON-Objekt mit genau diesen Schlüsseln. Wenn du die Komponente nicht kennst, gib dein bestes Wissen über das Produktkategorie-übliche Verhalten an und verwende keine erfundenen Produktnamen.`
+Antworte ausschließlich als JSON-Objekt mit genau diesen Schlüsseln. Wenn du die Komponente nicht kennst, gib dein bestes Wissen über das produktkategorie-übliche Verhalten an und verwende keine erfundenen Produktnamen.`
 }
 
-export async function discoverComponent(name, categoryLabel, apiKey, model) {
+export async function discoverComponent(name, categoryLabel, apiKey) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -30,7 +28,7 @@ export async function discoverComponent(name, categoryLabel, apiKey, model) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: model || 'mistral-small-latest',
+      model: MODEL,
       temperature: 0.2,
       response_format: { type: 'json_object' },
       messages: [
@@ -66,13 +64,18 @@ export async function discoverComponent(name, categoryLabel, apiKey, model) {
     ? payload.schritte.filter((s) => typeof s === 'string' && s.trim())
     : []
 
+  let confidence = Number(payload.confidence)
+  if (!Number.isFinite(confidence)) confidence = 50
+  confidence = Math.max(0, Math.min(100, Math.round(confidence)))
+
   return {
     faehigkeit: typeof payload.faehigkeit === 'string' ? payload.faehigkeit.trim() : '',
     auswirkung: typeof payload.auswirkung === 'string' ? payload.auswirkung.trim() : '',
     methodik: typeof payload.methodik === 'string' ? payload.methodik.trim() : '',
     schritte,
     docs: typeof payload.docs === 'string' ? payload.docs.trim() : '',
+    confidence,
+    begruendung:
+      typeof payload.begruendung === 'string' ? payload.begruendung.trim() : '',
   }
 }
-
-export { MODELS }
