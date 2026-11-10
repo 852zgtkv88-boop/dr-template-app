@@ -3,10 +3,12 @@ import { categories, components } from './data/catalog.js'
 import { generateKonzept, generatePlan } from './generator.js'
 import MarkdownView from './MarkdownView.jsx'
 import { discoverComponent } from './discovery.js'
+import { fetchRemoteComponents, pushRemoteComponents } from './storage.js'
 import './App.css'
 
 const STORAGE_KEY = 'dr-template-app:custom-components'
 const KEY_STORAGE = 'dr-template-app:mistral-key'
+const GH_STORAGE = 'dr-template-app:github-token'
 
 const byCategory = (catId, all) => all.filter((c) => c.category === catId)
 
@@ -60,6 +62,30 @@ export default function App() {
   )
   const [discovering, setDiscovering] = useState(false)
   const [discoveryError, setDiscoveryError] = useState('')
+  const [ghToken, setGhToken] = useState(
+    () => localStorage.getItem(GH_STORAGE) ?? ''
+  )
+  const [syncMsg, setSyncMsg] = useState('')
+
+  useEffect(() => {
+    if (ghToken) localStorage.setItem(GH_STORAGE, ghToken)
+    else localStorage.removeItem(GH_STORAGE)
+  }, [ghToken])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchRemoteComponents().then((remote) => {
+      if (cancelled || remote.length === 0) return
+      setCustoms((prev) => {
+        const ids = new Set(prev.map((c) => c.id))
+        const added = remote.filter((r) => !ids.has(r.id))
+        return added.length > 0 ? [...prev, ...added] : prev
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(customs))
@@ -137,6 +163,18 @@ export default function App() {
     }
   }
 
+  const persistCustoms = (next) => {
+    setCustoms(next)
+    if (ghToken.trim()) {
+      setSyncMsg('Speichern im Repository läuft…')
+      pushRemoteComponents(next, ghToken.trim())
+        .then(() => setSyncMsg('Komponenten im Repository gespeichert ✓'))
+        .catch((err) =>
+          setSyncMsg(err.message || 'Speichern im Repository fehlgeschlagen.')
+        )
+    }
+  }
+
   const saveCustom = (e) => {
     e.preventDefault()
     if (!form.name.trim()) return
@@ -159,8 +197,10 @@ export default function App() {
       confidence: form.confidence,
       begruendung: form.begruendung,
     }
-    setCustoms((prev) =>
-      editingId ? prev.map((c) => (c.id === editingId ? entry : c)) : [...prev, entry]
+    persistCustoms(
+      editingId
+        ? customs.map((c) => (c.id === editingId ? entry : c))
+        : [...customs, entry]
     )
     setForm(emptyCustom)
     setEditingId(null)
@@ -182,7 +222,7 @@ export default function App() {
   }
 
   const removeCustom = (id) => {
-    setCustoms((prev) => prev.filter((c) => c.id !== id))
+    persistCustoms(customs.filter((c) => c.id !== id))
     setSelected((prev) => prev.filter((x) => x !== id))
     if (editingId === id) {
       setEditingId(null)
@@ -320,6 +360,17 @@ export default function App() {
               <label>
                 Modell: mistral-small-latest (fix eingestellt)
               </label>
+              <label>
+                GitHub-Token für dauerhafte Speicherung (optional, bleibt nur lokal im Browser)
+                <input
+                  type="password"
+                  value={ghToken}
+                  onChange={(e) => setGhToken(e.target.value)}
+                  placeholder="github_pat_… (fine-grained, Contents: Read and write)"
+                  autoComplete="off"
+                />
+              </label>
+              {syncMsg && <p className="hint">{syncMsg}</p>}
               <p className="hint">
                 Der Schlüssel wird ausschließlich im Browser gehalten und direkt
                 an api.mistral.ai gesendet – er landet weder im Code noch im
