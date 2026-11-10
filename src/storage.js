@@ -38,6 +38,19 @@ export async function fetchRemoteComponents() {
   }
 }
 
+export function mergeComponents(remote, local) {
+  const byId = new Map(remote.map((c) => [c.id, c]))
+  for (const c of local) byId.set(c.id, c)
+  return [...byId.values()]
+}
+
+export async function syncCustomComponents(local, token) {
+  const remote = await fetchRemoteComponents()
+  const merged = mergeComponents(remote, local)
+  await pushRemoteComponents(merged, token)
+  return merged
+}
+
 export async function pushRemoteComponents(components, token) {
   const headers = {
     Authorization: `Bearer ${token}`,
