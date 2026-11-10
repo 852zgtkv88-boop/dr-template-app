@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "custom-1794334201282",
+    "category": "storage",
+    "name": "Pure",
+    "docs": "https://support.purestorage.com/Purity//Purity-FAQs-and-Best-Practices/Purity-FAQs-and-Best-Practices",
+    "konzept": {
+      "faehigkeit": "Pure Storage bietet mit der Purity-Software hochverfügbare Storage-Lösungen, die durch integrierte Replikationsmechanismen wie 'PureSync' und 'ActiveCluster' einen automatischen Failover zwischen Standorten ermöglichen. Die 'SafeMode'-Technologie schützt vor Ransomware, indem sie Snapshots vor Löschung oder Verschlüsselung bewahrt. Zudem unterstützt Pure Storage Cloud-basierte Backups über 'Pure1 Cloud Mediator' und lokale Snapshots mit 'Purity Snapshots'.",
+      "auswirkung": "Ein Ausfall der Pure Storage-Infrastruktur führt zum sofortigen Verlust des Zugriffs auf alle gespeicherten Daten und blockiert alle damit verbundenen Anwendungen und Nutzerprozesse. Bei korrekt konfigurierter Replikation ist ein Datenverlust von maximal wenigen Sekunden (RPO) realistisch, während ein vollständiger Ausfall ohne Replikation zu einem Totalverlust führen kann. Kritische Geschäftsprozesse wie Datenbanken, virtuelle Maschinen oder Dateiserver sind direkt betroffen.",
+      "methodik": "Die Recovery erfolgt primär über automatische Failover-Mechanismen wie 'ActiveCluster', die bei einem Standortausfall nahtlos auf die replizierten Daten umschalten. Manuelle Restore-Prozesse werden nur bei komplexen Szenarien oder fehlgeschlagenen Failovers benötigt, da die Purity-Software eine hohe Automatisierung bietet."
+    },
+    "plan": {
+      "schritte": [
+        "Prüfen lassen, ob der Ausfall durch einen lokalen Netzwerk- oder Stromausfall verursacht wurde und ob die betroffenen Standorte wieder erreichbar sind.",
+        "Bestätigen lassen, dass alle kritischen Anwendungen und Nutzer über den Ausfall informiert wurden und keine manuellen Eingriffe erforderlich sind.",
+        "Prüfen lassen, ob die automatischen Failover-Mechanismen wie 'ActiveCluster' erfolgreich auf die replizierten Daten umgeschaltet haben und der Zugriff wiederhergestellt ist.",
+        "Bestätigen lassen, dass alle betroffenen Prozesse und Nutzer nach der Wiederherstellung des Zugriffs auf die Daten wieder normal arbeiten können."
+      ]
+    },
+    "confidence": 90,
+    "begruendung": "Produktmechanismen sind durch offizielle Dokumentation und technische Whitepapers von Pure Storage gut belegt."
+  }
+]
