@@ -19,5 +19,26 @@
     },
     "confidence": 90,
     "begruendung": "Produktmechanismen sind durch umfassende öffentliche Dokumentation und Marktakzeptanz gut bekannt."
+  },
+  {
+    "id": "custom-1794335010357",
+    "category": "iam",
+    "name": "Cloud Identity",
+    "docs": "https://cloud.google.com/identity/docs",
+    "konzept": {
+      "faehigkeit": "Cloud Identity bietet eine hochverfügbare Infrastruktur mit automatischer Replikation über mehrere Regionen und integrierten Failover-Mechanismen. Die Komponente nutzt Google Clouds globale Lastverteilung und automatische Skalierung, um Ausfälle zu minimieren. Backups werden kontinuierlich in Echtzeit gesichert, wobei Nutzer- und Konfigurationsdaten in verteilten Speichersystemen wie Cloud Spanner abgelegt werden.",
+      "auswirkung": "Ein Ausfall von Cloud Identity führt zum sofortigen Verlust des Zugriffs auf alle identitätsbasierten Dienste wie Single Sign-On (SSO), Multi-Faktor-Authentifizierung (MFA) und autorisierte Anwendungen. Nutzer können sich nicht mehr authentifizieren, was den Zugriff auf kritische Geschäftsprozesse blockiert. Bei korrekter Konfiguration ist ein Datenverlust unwahrscheinlich, da Nutzerdaten und Berechtigungen redundant gespeichert werden.",
+      "methodik": "Die Recovery erfolgt in der Regel automatisch über integrierte Failover-Mechanismen, da Cloud Identity als hochverfügbarer Dienst konzipiert ist. Manuelle Eingriffe sind nur bei schwerwiegenden Konfigurationsfehlern oder Datenkorruption erforderlich."
+    },
+    "plan": {
+      "schritte": [
+        "Prüfen lassen, ob der Ausfall auf einen bekannten Vorfall oder eine geplante Wartung zurückzuführen ist.",
+        "Bestätigen lassen, dass alle betroffenen Nutzer und Stakeholder über den Ausfall und die voraussichtliche Wiederherstellungszeit informiert wurden.",
+        "Prüfen lassen, ob kritische Geschäftsprozesse weiterhin ohne Identitätsdienste funktionieren können oder alternative Authentifizierungsmethoden aktiviert werden müssen.",
+        "Bestätigen lassen, dass die Wiederherstellung erfolgreich abgeschlossen wurde und alle Dienste wieder voll funktionsfähig sind."
+      ]
+    },
+    "confidence": 95,
+    "begruendung": "Produktmechanismen sind durch die offizielle Google Cloud-Dokumentation detailliert beschrieben und entsprechen den typischen DR-Features einer Enterprise-Identity-Lösung."
   }
 ]
