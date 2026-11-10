@@ -1,13 +1,14 @@
-import { components } from './data/catalog.js'
+import { components as catalog } from './data/catalog.js'
 
 const fmtDate = (iso) => {
   if (!iso) return new Date().toISOString().slice(0, 10)
   return iso
 }
 
-export function generateKonzept(meta, selectedIds) {
+export function generateKonzept(meta, selectedIds, customComponents = []) {
+  const all = [...catalog, ...customComponents]
   const sel = selectedIds
-    .map((id) => components.find((c) => c.id === id))
+    .map((id) => all.find((c) => c.id === id))
     .filter(Boolean)
   const lines = []
   lines.push(`# Disaster-Recovery-Konzept: ${meta.projekt}`)
@@ -35,7 +36,9 @@ export function generateKonzept(meta, selectedIds) {
     const kurz =
       c.konzept.faehigkeit.split('.')[0].replace(/^(.)/, (m) => m.toUpperCase()) +
       '.'
-    lines.push(`| ${c.name} | ${kurz} | [Doku](${c.docs}) |`)
+    lines.push(
+      `| ${c.name} | ${kurz} | ${c.docs ? `[Doku](${c.docs})` : '–'} |`
+    )
   }
   lines.push('')
   lines.push('## 3. Recovery-Fähigkeit, Ausfallauswirkungen und Methodik je Komponente')
@@ -49,8 +52,10 @@ export function generateKonzept(meta, selectedIds) {
     lines.push('')
     lines.push(`**Recovery-Methodik:** ${c.konzept.methodik}`)
     lines.push('')
-    lines.push(`**Produktdokumentation:** ${c.docs}`)
-    lines.push('')
+    if (c.docs) {
+      lines.push(`**Produktdokumentation:** ${c.docs}`)
+      lines.push('')
+    }
   })
   lines.push('## 4. Ziele (RTO / RPO)')
   lines.push('')
@@ -66,9 +71,10 @@ export function generateKonzept(meta, selectedIds) {
   return lines.join('\n')
 }
 
-export function generatePlan(meta, selectedIds) {
+export function generatePlan(meta, selectedIds, customComponents = []) {
+  const all = [...catalog, ...customComponents]
   const sel = selectedIds
-    .map((id) => components.find((c) => c.id === id))
+    .map((id) => all.find((c) => c.id === id))
     .filter(Boolean)
   const lines = []
   lines.push(`# Disaster-Recovery-Plan: ${meta.projekt}`)
@@ -107,9 +113,11 @@ export function generatePlan(meta, selectedIds) {
     lines.push('')
     lines.push('**Wesentliche Schritte:**')
     lines.push('')
-    c.plan.schritte.forEach((s, j) => {
-      lines.push(`${j + 1}. ${s}`)
-    })
+    c.plan?.schritte?.length
+      ? c.plan.schritte.forEach((s, j) => {
+          lines.push(`${j + 1}. ${s}`)
+        })
+      : lines.push(`1. ${c.konzept.methodik}`)
     lines.push('')
   })
   lines.push('## 4. Priorisierung')
