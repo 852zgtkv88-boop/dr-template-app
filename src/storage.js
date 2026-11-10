@@ -1,7 +1,6 @@
 const REPO = '852zgtkv88-boop/dr-template-app'
 const FILE_PATH = 'custom-components.json'
 const BRANCH = 'main'
-const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE_PATH}`
 const API_URL = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`
 
 function toBase64(text) {
@@ -27,9 +26,13 @@ function isValidComponent(c) {
   )
 }
 
-export async function fetchRemoteComponents() {
+export async function fetchRemoteComponents(token) {
   try {
-    const res = await fetch(`${RAW_URL}?t=${Date.now()}`)
+    const headers = { Accept: 'application/vnd.github.raw+json' }
+    if (token) headers.Authorization = `Bearer ${token}`
+    const res = await fetch(`${API_URL}?ref=${BRANCH}&t=${Date.now()}`, {
+      headers,
+    })
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data) ? data.filter(isValidComponent) : []
@@ -45,7 +48,7 @@ export function mergeComponents(remote, local) {
 }
 
 export async function syncCustomComponents(local, token) {
-  const remote = await fetchRemoteComponents()
+  const remote = await fetchRemoteComponents(token)
   const merged = mergeComponents(remote, local)
   await pushRemoteComponents(merged, token)
   return merged
