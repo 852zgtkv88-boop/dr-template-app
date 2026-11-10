@@ -3,7 +3,11 @@ import { categories, components } from './data/catalog.js'
 import { generateKonzept, generatePlan } from './generator.js'
 import MarkdownView from './MarkdownView.jsx'
 import { discoverComponent } from './discovery.js'
-import { fetchRemoteComponents, pushRemoteComponents } from './storage.js'
+import {
+  fetchRemoteComponents,
+  mergeComponents,
+  syncCustomComponents,
+} from './storage.js'
 import './App.css'
 
 const STORAGE_KEY = 'dr-template-app:custom-components'
@@ -72,15 +76,17 @@ export default function App() {
     else localStorage.removeItem(GH_STORAGE)
   }, [ghToken])
 
+  const [remoteLoaded, setRemoteLoaded] = useState(false)
+
   useEffect(() => {
     let cancelled = false
     fetchRemoteComponents().then((remote) => {
-      if (cancelled || remote.length === 0) return
+      if (cancelled) return
       setCustoms((prev) => {
-        const ids = new Set(prev.map((c) => c.id))
-        const added = remote.filter((r) => !ids.has(r.id))
-        return added.length > 0 ? [...prev, ...added] : prev
+        const merged = mergeComponents(remote, prev)
+        return merged.length === prev.length ? prev : merged
       })
+      setRemoteLoaded(true)
     })
     return () => {
       cancelled = true
@@ -167,8 +173,13 @@ export default function App() {
     setCustoms(next)
     if (ghToken.trim()) {
       setSyncMsg('Speichern im Repository läuft…')
-      pushRemoteComponents(next, ghToken.trim())
-        .then(() => setSyncMsg('Komponenten im Repository gespeichert ✓'))
+      syncCustomComponents(next, ghToken.trim())
+        .then((merged) => {
+          setCustoms(merged)
+          setSyncMsg(
+            `Komponenten im Repository gespeichert ✓ (${merged.length} gesamt, mit bestehenden zusammengeführt)`
+          )
+        })
         .catch((err) =>
           setSyncMsg(err.message || 'Speichern im Repository fehlgeschlagen.')
         )
@@ -491,7 +502,10 @@ export default function App() {
             {discoveryError && <p className="error">{discoveryError}</p>}
           </form>
 
-          {customs.length > 0 && (
+          {!remoteLoaded && (
+            <p className="hint">Gespeicherte Komponenten werden geladen…</p>
+          )}
+          {remoteLoaded && customs.length > 0 && (
             <>
               <h3 className="custom-list-heading">Gespeicherte eigene Komponenten</h3>
               <ul className="selected-list">
