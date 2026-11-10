@@ -80,7 +80,8 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
-    fetchRemoteComponents().then((remote) => {
+    const token = localStorage.getItem(GH_STORAGE) ?? ''
+    fetchRemoteComponents(token).then((remote) => {
       if (cancelled) return
       setCustoms((prev) => {
         const merged = mergeComponents(remote, prev)
