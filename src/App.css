@@ -197,3 +197,151 @@ select:focus {
   overflow: auto;
   margin: 0;
 }
+
+textarea {
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: 2px solid rgba(11, 107, 203, 0.35);
+}
+
+.custom-form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.custom-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #5a6b7b;
+}
+
+.custom-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.secondary {
+  font: inherit;
+  padding: 0.45rem 0.9rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: #1c2b36;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.custom-list-heading {
+  font-size: 0.9rem;
+  margin: 1.25rem 0 0.5rem;
+  color: #1c2b36;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mini {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 6px;
+  width: 1.8rem;
+  height: 1.8rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.mini:hover {
+  background: #eef1f4;
+}
+
+.doc-scroll {
+  max-height: 75vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.markdown {
+  padding: 1.5rem 2rem;
+  color: #1c2b36;
+  max-width: 75ch;
+}
+
+.markdown h1 {
+  font-size: 1.4rem;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--accent);
+  color: #0b3d63;
+}
+
+.markdown h2 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+  color: #0b3d63;
+}
+
+.markdown h3 {
+  font-size: 1rem;
+  margin: 1.25rem 0 0.4rem;
+  color: #1c2b36;
+}
+
+.markdown p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.markdown strong {
+  color: #0b3d63;
+}
+
+.markdown a {
+  color: var(--accent);
+}
+
+.markdown ol,
+.markdown ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  line-height: 1.6;
+}
+
+.markdown li {
+  margin: 0.25rem 0;
+}
+
+.markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown thead th {
+  background: #eef3f8;
+  color: #0b3d63;
+}
+
+.markdown tbody tr:nth-child(even) {
+  background: #f7fafc;
+}
