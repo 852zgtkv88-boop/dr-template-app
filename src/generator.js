@@ -56,6 +56,12 @@ export function generateKonzept(meta, selectedIds, customComponents = []) {
       lines.push(`**Produktdokumentation:** ${c.docs}`)
       lines.push('')
     }
+    if (typeof c.confidence === 'number') {
+      lines.push(
+        `**Konfidenz der Angaben:** ${c.confidence}%${c.begruendung ? ` – ${c.begruendung}` : ''} (KI-generiert, bitte vor Freigabe prüfen.)`
+      )
+      lines.push('')
+    }
   })
   lines.push('## 4. Ziele (RTO / RPO)')
   lines.push('')
@@ -111,6 +117,12 @@ export function generatePlan(meta, selectedIds, customComponents = []) {
       `**Worum es geht:** ${c.konzept.faehigkeit.split('.')[0]}. ${c.konzept.auswirkung.split(';')[0]}.`
     )
     lines.push('')
+    if (typeof c.confidence === 'number') {
+      lines.push(
+        `**Konfidenz der Angaben:** ${c.confidence}% – bitte bei niedriger Konfidenz mit dem Hersteller bzw. Fachteam abgleichen.`
+      )
+      lines.push('')
+    }
     lines.push('**Wesentliche Schritte:**')
     lines.push('')
     c.plan?.schritte?.length

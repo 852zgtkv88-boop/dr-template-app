@@ -345,3 +345,75 @@ textarea:focus {
 .markdown tbody tr:nth-child(even) {
   background: #f7fafc;
 }
+
+.settings {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f7fafc;
+}
+
+.settings summary {
+  font-size: 0.85rem;
+  color: #0b3d63;
+  cursor: pointer;
+}
+
+.settings-body {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.settings-body label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #5a6b7b;
+}
+
+.error {
+  color: #b3261e;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.confidence {
+  font-size: 0.8rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+
+.conf-high {
+  color: #1a7f37;
+  background: #e6f4ea;
+}
+
+.conf-mid {
+  color: #9a6700;
+  background: #fff8c5;
+}
+
+.conf-low {
+  color: #b3261e;
+  background: #fce8e6;
+}
+
+.selected-list small em {
+  font-style: normal;
+}
+
+.conf-high em,
+em.conf-high {
+  color: #1a7f37;
+}
+
+em.conf-mid {
+  color: #9a6700;
+}
+
+em.conf-low {
+  color: #b3261e;
+}
