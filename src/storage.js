@@ -114,8 +114,12 @@ export async function fetchAuditTrail(token) {
   return Array.isArray(data) ? data : []
 }
 
-export async function pushAuditTrail(entries, token) {
-  await pushRepoFile(FILES.audit, entries, token, 'Audit-Trail aktualisieren')
+export async function appendAuditEntry(entry, token) {
+  const remote = (await fetchRepoFile(FILES.audit, token)) ?? []
+  const ids = new Set(remote.map((a) => a.id))
+  const merged = [...remote, ...(ids.has(entry.id) ? [] : [entry])]
+  await pushRepoFile(FILES.audit, merged, token, 'Audit-Trail aktualisieren')
+  return merged
 }
 
 export async function fetchDocuments(token) {
