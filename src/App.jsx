@@ -234,8 +234,22 @@ export default function App() {
   }
 
   const removeCustom = (id) => {
-    persistCustoms(customs.filter((c) => c.id !== id))
+    const next = customs.filter((c) => c.id !== id)
     setSelected((prev) => prev.filter((x) => x !== id))
+    if (ghToken.trim()) {
+      setCustoms(next)
+      setSyncMsg('Löschen im Repository läuft…')
+      syncCustomComponents(next, ghToken.trim(), [id])
+        .then((merged) => {
+          setCustoms(merged)
+          setSyncMsg('Komponente im Repository gelöscht ✓')
+        })
+        .catch((err) =>
+          setSyncMsg(err.message || 'Löschen im Repository fehlgeschlagen.')
+        )
+    } else {
+      setCustoms(next)
+    }
     if (editingId === id) {
       setEditingId(null)
       setForm(emptyCustom)
@@ -506,9 +520,16 @@ export default function App() {
           {!remoteLoaded && (
             <p className="hint">Gespeicherte Komponenten werden geladen…</p>
           )}
-          {remoteLoaded && customs.length > 0 && (
-            <>
-              <h3 className="custom-list-heading">Gespeicherte eigene Komponenten</h3>
+          {remoteLoaded && (
+            <details className="settings">
+              <summary>
+                Knowledgebase verwalten ({customs.length} eigene Komponenten)
+              </summary>
+              <p className="hint">
+                Gespeicherte Komponenten erscheinen dauerhaft in den
+                Kategorie-Dropdowns unter Abschnitt 2 und werden von dort in
+                Konzept und Plan genutzt.
+              </p>
               <ul className="selected-list">
                 {customs.map((c) => (
                   <li key={c.id}>
@@ -537,7 +558,7 @@ export default function App() {
                   </li>
                 ))}
               </ul>
-            </>
+            </details>
           )}
         </section>
 
