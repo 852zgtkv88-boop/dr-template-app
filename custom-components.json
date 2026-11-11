@@ -19,5 +19,26 @@
     },
     "confidence": 95,
     "begruendung": "Produktmechanismen sind detailliert in der offiziellen Microsoft-Dokumentation beschrieben und entsprechen den typischen DR-Features von Azure Blob Storage."
+  },
+  {
+    "id": "custom-1794414661414",
+    "category": "storage",
+    "name": "AWS Glacier",
+    "docs": "https://docs.aws.amazon.com/amazonglacier/latest/dev/introduction.html",
+    "konzept": {
+      "faehigkeit": "AWS Glacier bietet eine hochverfügbare und langlebige Speicherlösung mit einer Verfügbarkeit von 99,999999999% (11 Neunen) über alle Verfügbarkeitszonen hinweg. Die Daten werden automatisch in mehreren physischen Standorten repliziert, und es gibt integrierte Mechanismen wie Vault Lock für unveränderliche Backups sowie S3 Lifecycle Policies zur Automatisierung von Archivierungs- und Löschprozessen. Die Wiederherstellung erfolgt über definierte Retrieval-Optionen (Expedited, Standard, Bulk) mit unterschiedlichen Zeitfenstern.",
+      "auswirkung": "Ein Ausfall von AWS Glacier führt zu verzögerter oder unmöglicher Datenwiederherstellung, was kritische Geschäftsprozesse wie Compliance-Anforderungen, historische Datenanalysen oder langfristige Backups beeinträchtigen kann. Bei Standard-Konfigurationen ist ein Datenverlust unwahrscheinlich, da die Daten repliziert werden, jedoch kann die Wiederherstellungszeit je nach Retrieval-Option zwischen Minuten und Stunden liegen. Bei fehlerhafter Konfiguration (z. B. fehlende Vault Locks) besteht das Risiko von Datenmanipulation oder -verlust.",
+      "methodik": "Die Recovery erfolgt in der Regel manuell über definierte Retrieval-Prozesse, da AWS Glacier primär für langfristige Archivierung und nicht für Hochverfügbarkeit ausgelegt ist. Ein automatischer Failover ist nicht vorgesehen, da die Komponente selbst keine aktive Verarbeitung durchführt, sondern nur passive Datenhaltung."
+    },
+    "plan": {
+      "schritte": [
+        "Prüfen lassen, ob die betroffenen Daten in AWS Glacier tatsächlich archiviert wurden und ob die Zugriffsrechte für die Wiederherstellung korrekt konfiguriert sind.",
+        "Bestätigen lassen, welche Retrieval-Option (Expedited, Standard, Bulk) für die Wiederherstellung der Daten gewählt werden soll, basierend auf Dringlichkeit und Kosten.",
+        "Veranlassen, dass die Wiederherstellung der Daten initiiert wird und die geschätzte Zeit bis zur Verfügbarkeit der Daten dokumentiert wird.",
+        "Nach Erhalt der wiederhergestellten Daten prüfen lassen, ob die Integrität und Vollständigkeit der Daten gewährleistet ist, bevor sie in den produktiven Betrieb zurückgeführt werden."
+      ]
+    },
+    "confidence": 95,
+    "begruendung": "Produktmechanismen sind detailliert in der offiziellen AWS-Dokumentation beschrieben, und AWS Glacier ist ein etabliertes Produkt mit klaren DR-Features."
   }
 ]
