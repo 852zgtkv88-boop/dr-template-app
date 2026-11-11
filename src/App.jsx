@@ -103,7 +103,10 @@ export default function App() {
     else localStorage.removeItem(KEY_STORAGE)
   }, [apiKey])
 
-  const all = useMemo(() => [...components, ...customs], [customs])
+  const all = useMemo(() => {
+    const overridden = new Set(customs.map((c) => c.id))
+    return [...customs, ...components.filter((c) => !overridden.has(c.id))]
+  }, [customs])
 
   const konzept = useMemo(
     () => generateKonzept(meta, selected, customs),
@@ -231,6 +234,25 @@ export default function App() {
       confidence: c.confidence ?? null,
       begruendung: c.begruendung ?? '',
     })
+  }
+
+  const resetCatalogEntry = (id) => {
+    const next = customs.filter((c) => c.id !== id)
+    setSelected((prev) => prev.filter((x) => x !== id))
+    if (ghToken.trim()) {
+      setCustoms(next)
+      setSyncMsg('Zurücksetzen im Repository läuft…')
+      syncCustomComponents(next, ghToken.trim(), [id])
+        .then((merged) => {
+          setCustoms(merged)
+          setSyncMsg('Katalog-Eintrag auf Original zurückgesetzt ✓')
+        })
+        .catch((err) =>
+          setSyncMsg(err.message || 'Zurücksetzen im Repository fehlgeschlagen.')
+        )
+    } else {
+      setCustoms(next)
+    }
   }
 
   const removeCustom = (id) => {
@@ -523,40 +545,92 @@ export default function App() {
           {remoteLoaded && (
             <details className="settings">
               <summary>
-                Knowledgebase verwalten ({customs.length} eigene Komponenten)
+                Knowledgebase verwalten ({all.length} Komponenten)
               </summary>
               <p className="hint">
-                Gespeicherte Komponenten erscheinen dauerhaft in den
-                Kategorie-Dropdowns unter Abschnitt 2 und werden von dort in
-                Konzept und Plan genutzt.
+                Änderungen an Katalog-Komponenten werden als Override in der
+                Knowledgebase gespeichert und lassen sich zurücksetzen. Eigene
+                Komponenten erscheinen dauerhaft in den Kategorie-Dropdowns
+                unter Abschnitt 2.
               </p>
+              <h4 className="custom-list-heading">Katalog-Komponenten</h4>
               <ul className="selected-list">
-                {customs.map((c) => (
-                  <li key={c.id}>
-                    <span>
-                      <strong>{c.name}</strong>
-                      <small>
-                        {categories.find((cat) => cat.id === c.category)?.label}
-                        {selected.includes(c.id) && ' · ausgewählt'}
-                      </small>
-                    </span>
-                    <span className="row-actions">
-                      <button
-                        className="mini"
-                        onClick={() => toggle(c.id)}
-                        title={selected.includes(c.id) ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
-                      >
-                        {selected.includes(c.id) ? '−' : '+'}
-                      </button>
-                      <button className="mini" onClick={() => editCustom(c)} title="Bearbeiten">
-                        ✎
-                      </button>
-                      <button className="mini" onClick={() => removeCustom(c.id)} title="Löschen">
-                        🗑
-                      </button>
-                    </span>
-                  </li>
-                ))}
+                {components.map((cat) => {
+                  const override = customs.find((x) => x.id === cat.id)
+                  const shown = override ?? cat
+                  return (
+                    <li key={cat.id}>
+                      <span>
+                        <strong>{shown.name}</strong>
+                        <small>
+                          {categories.find((c) => c.id === shown.category)?.label}
+                          {override && (
+                            <em className="conf-mid"> · geändert</em>
+                          )}
+                          {selected.includes(shown.id) && ' · ausgewählt'}
+                        </small>
+                      </span>
+                      <span className="row-actions">
+                        <button
+                          className="mini"
+                          onClick={() => toggle(shown.id)}
+                          title={selected.includes(shown.id) ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
+                        >
+                          {selected.includes(shown.id) ? '−' : '+'}
+                        </button>
+                        <button
+                          className="mini"
+                          onClick={() => editCustom(shown)}
+                          title="Bearbeiten"
+                        >
+                          ✎
+                        </button>
+                        {override && (
+                          <button
+                            className="mini"
+                            onClick={() => resetCatalogEntry(cat.id)}
+                            title="Auf Original zurücksetzen"
+                          >
+                            ↺
+                          </button>
+                        )}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+              {customs.some((c) => c.id.startsWith('custom-')) && (
+                <h4 className="custom-list-heading">Eigene Komponenten</h4>
+              )}
+              <ul className="selected-list">
+                {customs
+                  .filter((c) => c.id.startsWith('custom-'))
+                  .map((c) => (
+                    <li key={c.id}>
+                      <span>
+                        <strong>{c.name}</strong>
+                        <small>
+                          {categories.find((cat) => cat.id === c.category)?.label}
+                          {selected.includes(c.id) && ' · ausgewählt'}
+                        </small>
+                      </span>
+                      <span className="row-actions">
+                        <button
+                          className="mini"
+                          onClick={() => toggle(c.id)}
+                          title={selected.includes(c.id) ? 'Aus Auswahl entfernen' : 'Zur Auswahl hinzufügen'}
+                        >
+                          {selected.includes(c.id) ? '−' : '+'}
+                        </button>
+                        <button className="mini" onClick={() => editCustom(c)} title="Bearbeiten">
+                          ✎
+                        </button>
+                        <button className="mini" onClick={() => removeCustom(c.id)} title="Löschen">
+                          🗑
+                        </button>
+                      </span>
+                    </li>
+                  ))}
               </ul>
             </details>
           )}
