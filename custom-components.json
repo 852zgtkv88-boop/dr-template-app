@@ -2,7 +2,7 @@
   {
     "id": "custom-1794414244032",
     "category": "storage",
-    "name": "Azure GLacier",
+    "name": "Amazon Glacier",
     "docs": "https://learn.microsoft.com/de-de/azure/storage/blobs/archive-storage-overview",
     "konzept": {
       "faehigkeit": "Azure Glacier (Teil von Azure Blob Storage) bietet eine hochverfügbare und langlebige Speicherlösung mit automatischer Replikation über mehrere Azure Availability Zonen oder Regionen hinweg. Die Komponente unterstützt Versionierung und Soft Delete, um Datenverlust zu minimieren, sowie die Integration mit Azure Backup und Azure Site Recovery für Disaster-Recovery-Szenarien. Die Wiederherstellung von Daten kann je nach Tier (z. B. Cool oder Archive) zwischen Minuten und Stunden dauern.",
