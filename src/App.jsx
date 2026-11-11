@@ -506,9 +506,16 @@ export default function App() {
           {!remoteLoaded && (
             <p className="hint">Gespeicherte Komponenten werden geladen…</p>
           )}
-          {remoteLoaded && customs.length > 0 && (
-            <>
-              <h3 className="custom-list-heading">Gespeicherte eigene Komponenten</h3>
+          {remoteLoaded && (
+            <details className="settings">
+              <summary>
+                Knowledgebase verwalten ({customs.length} eigene Komponenten)
+              </summary>
+              <p className="hint">
+                Gespeicherte Komponenten erscheinen dauerhaft in den
+                Kategorie-Dropdowns unter Abschnitt 2 und werden von dort in
+                Konzept und Plan genutzt.
+              </p>
               <ul className="selected-list">
                 {customs.map((c) => (
                   <li key={c.id}>
@@ -537,7 +544,7 @@ export default function App() {
                   </li>
                 ))}
               </ul>
-            </>
+            </details>
           )}
         </section>
 
