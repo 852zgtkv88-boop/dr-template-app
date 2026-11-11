@@ -40,5 +40,26 @@
     },
     "confidence": 95,
     "begruendung": "Produktmechanismen sind durch die offizielle Google Cloud-Dokumentation detailliert beschrieben und entsprechen den typischen DR-Features einer Enterprise-Identity-Lösung."
+  },
+  {
+    "id": "custom-1794414244032",
+    "category": "storage",
+    "name": "Azure GLacier",
+    "docs": "https://learn.microsoft.com/de-de/azure/storage/blobs/archive-storage-overview",
+    "konzept": {
+      "faehigkeit": "Azure Glacier (Teil von Azure Blob Storage) bietet eine hochverfügbare und langlebige Speicherlösung mit automatischer Replikation über mehrere Azure Availability Zonen oder Regionen hinweg. Die Komponente unterstützt Versionierung und Soft Delete, um Datenverlust zu minimieren, sowie die Integration mit Azure Backup und Azure Site Recovery für Disaster-Recovery-Szenarien. Die Wiederherstellung von Daten kann je nach Tier (z. B. Cool oder Archive) zwischen Minuten und Stunden dauern.",
+      "auswirkung": "Ein Ausfall von Azure Glacier kann zu temporären Zugriffsproblemen auf archivierte oder selten genutzte Daten führen, was insbesondere für Backup- und Compliance-Prozesse kritisch ist. Bei fehlender Replikation oder falscher Konfiguration kann es zu Datenverlust kommen, wobei die Wahrscheinlichkeit durch die standardmäßige Redundanz (LRS, GRS, ZRS) stark reduziert wird. Nutzer oder Anwendungen, die auf archivierte Daten angewiesen sind, sind direkt betroffen.",
+      "methodik": "Die Recovery erfolgt in der Regel manuell durch Initiierung eines Restore-Prozesses aus dem Archiv, da Azure Glacier nicht für Hochverfügbarkeit im Echtzeitbetrieb ausgelegt ist. Automatische Failover-Mechanismen existieren für die zugrundeliegende Infrastruktur, nicht jedoch für die Datenwiederherstellung selbst."
+    },
+    "plan": {
+      "schritte": [
+        "Prüfen lassen, ob der Ausfall auf eine falsche Konfiguration oder ein temporäres Problem zurückzuführen ist.",
+        "Bestätigen lassen, dass alle relevanten Stakeholder (z. B. Compliance-Teams, Backup-Verantwortliche) über den Vorfall informiert wurden.",
+        "Entscheiden lassen, ob ein manueller Restore-Prozess aus dem Archiv gestartet werden soll, basierend auf der Kritikalität der betroffenen Daten.",
+        "Überwachen lassen, ob die Wiederherstellung erfolgreich abgeschlossen wurde und alle betroffenen Systeme wieder wie erwartet funktionieren."
+      ]
+    },
+    "confidence": 95,
+    "begruendung": "Produktmechanismen sind detailliert in der offiziellen Microsoft-Dokumentation beschrieben und entsprechen den typischen DR-Features von Azure Blob Storage."
   }
 ]
