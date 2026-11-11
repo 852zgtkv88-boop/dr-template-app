@@ -1,26 +1,5 @@
 [
   {
-    "id": "custom-1794334262133",
-    "category": "storage",
-    "name": "Pure",
-    "docs": "https://www.purestorage.com/documentation.html",
-    "konzept": {
-      "faehigkeit": "Pure Storage-Systeme bieten eine hohe Recovery-Fähigkeit durch integrierte Hochverfügbarkeitsfeatures wie ActiveCluster für synchrone Replikation zwischen Standorten und Purity ActiveDR für asynchrone Replikation. Die Snapshots und Safemode-Funktionen ermöglichen schnelle Datenwiederherstellung mit minimalem Datenverlust. Zudem unterstützt Pure die Integration mit Backup-Lösungen wie Veeam oder Commvault für zusätzliche Schutzschichten.",
-      "auswirkung": "Ein Ausfall eines Pure Storage-Systems kann kritische Geschäftsprozesse wie Datenbanken, virtuelle Maschinen oder Dateiserver beeinträchtigen, was zu Unterbrechungen für Nutzer und Anwendungen führt. Bei fehlender Replikation oder Snapshots sind Datenverluste von Minuten bis Stunden möglich, während bei korrekter Konfiguration mit Replikation und Snapshots der Datenverlust auf Sekunden oder gar keine Datenverluste reduziert werden kann.",
-      "methodik": "Die Recovery erfolgt in der Regel automatisch über Failover-Mechanismen wie ActiveCluster oder ActiveDR, um Ausfallzeiten zu minimieren. Bei manuellen Wiederherstellungen werden Snapshots oder Backups genutzt, was je nach Konfiguration und Datenmenge einige Minuten bis Stunden dauern kann."
-    },
-    "plan": {
-      "schritte": [
-        "Prüfen lassen, ob die Replikationsverbindung zwischen den Standorten aktiv und stabil ist.",
-        "Bestätigen lassen, dass alle kritischen Anwendungen und Nutzer auf die replizierten Daten zugreifen können.",
-        "Sicherstellen lassen, dass die letzten Snapshots oder Backups erfolgreich erstellt und verfügbar sind.",
-        "Freigabe für den Wiederanlauf der Systeme erteilen, sobald alle Prüfungen abgeschlossen und bestätigt sind."
-      ]
-    },
-    "confidence": 90,
-    "begruendung": "Produktmechanismen sind durch umfassende öffentliche Dokumentation und Marktakzeptanz gut bekannt."
-  },
-  {
     "id": "custom-1794414244032",
     "category": "storage",
     "name": "Azure GLacier",
