@@ -7,12 +7,17 @@ import {
   fetchRemoteComponents,
   mergeComponents,
   syncCustomComponents,
+  fetchAuditTrail,
+  pushAuditTrail,
+  fetchDocuments,
+  pushDocuments,
 } from './storage.js'
 import './App.css'
 
 const STORAGE_KEY = 'dr-template-app:custom-components'
 const KEY_STORAGE = 'dr-template-app:mistral-key'
 const GH_STORAGE = 'dr-template-app:github-token'
+const AUTHOR_STORAGE = 'dr-template-app:author'
 
 const byCategory = (catId, all) => all.filter((c) => c.category === catId)
 
@@ -70,6 +75,17 @@ export default function App() {
     () => localStorage.getItem(GH_STORAGE) ?? ''
   )
   const [syncMsg, setSyncMsg] = useState('')
+  const [author, setAuthor] = useState(
+    () => localStorage.getItem(AUTHOR_STORAGE) ?? ''
+  )
+  const [audit, setAudit] = useState([])
+  const [docs, setDocs] = useState({})
+  const [docEditing, setDocEditing] = useState(false)
+  const [docDraft, setDocDraft] = useState('')
+
+  useEffect(() => {
+    localStorage.setItem(AUTHOR_STORAGE, author)
+  }, [author])
 
   useEffect(() => {
     if (ghToken) localStorage.setItem(GH_STORAGE, ghToken)
@@ -88,6 +104,28 @@ export default function App() {
         return merged.length === prev.length ? prev : merged
       })
       setRemoteLoaded(true)
+    })
+    fetchAuditTrail(token).then((remoteAudit) => {
+      if (cancelled || remoteAudit.length === 0) return
+      setAudit((prev) => {
+        const ids = new Set(prev.map((a) => a.id))
+        const added = remoteAudit.filter((a) => !ids.has(a.id))
+        return added.length > 0 ? [...prev, ...added] : prev
+      })
+    })
+    fetchDocuments(token).then((remoteDocs) => {
+      if (cancelled || Object.keys(remoteDocs).length === 0) return
+      setDocs((prev) => {
+        const next = { ...prev }
+        for (const key of ['konzept', 'plan']) {
+          const r = remoteDocs[key]
+          const l = prev[key]
+          if (r && (!l || new Date(r.updatedAt) > new Date(l.updatedAt))) {
+            next[key] = r
+          }
+        }
+        return next
+      })
     })
     return () => {
       cancelled = true
@@ -113,7 +151,8 @@ export default function App() {
     [meta, selected, customs]
   )
   const plan = useMemo(() => generatePlan(meta, selected, customs), [meta, selected, customs])
-  const currentDoc = activeDoc === 'konzept' ? konzept : plan
+  const generatedDoc = activeDoc === 'konzept' ? konzept : plan
+  const currentDoc = docs[activeDoc]?.content ?? generatedDoc
 
   const toggle = (id) =>
     setSelected((prev) =>
@@ -173,7 +212,23 @@ export default function App() {
     }
   }
 
-  const persistCustoms = (next) => {
+  const addAudit = (type, action, subject) => {
+    const entry = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      ts: new Date().toISOString(),
+      author: author.trim() || 'unbekannt',
+      type,
+      action,
+      subject,
+    }
+    const next = [entry, ...audit]
+    setAudit(next)
+    if (ghToken.trim()) {
+      pushAuditTrail(next, ghToken.trim()).catch(() => {})
+    }
+  }
+
+  const persistCustoms = (next, action, subject) => {
     setCustoms(next)
     if (ghToken.trim()) {
       setSyncMsg('Speichern im Repository läuft…')
@@ -183,10 +238,13 @@ export default function App() {
           setSyncMsg(
             `Komponenten im Repository gespeichert ✓ (${merged.length} gesamt, mit bestehenden zusammengeführt)`
           )
+          addAudit('component', action, subject)
         })
         .catch((err) =>
           setSyncMsg(err.message || 'Speichern im Repository fehlgeschlagen.')
         )
+    } else {
+      addAudit('component', action, subject)
     }
   }
 
@@ -212,15 +270,56 @@ export default function App() {
       confidence: form.confidence,
       begruendung: form.begruendung,
     }
+    const isNew = !editingId
+    const isOverride = editingId && !customs.some((c) => c.id === editingId)
+    const action = isNew
+      ? 'Komponente erstellt'
+      : isOverride
+        ? 'Katalog-Eintrag angepasst (Override)'
+        : 'Komponente geändert'
     persistCustoms(
       editingId
         ? customs.some((c) => c.id === editingId)
           ? customs.map((c) => (c.id === editingId ? entry : c))
           : [...customs, entry]
-        : [...customs, entry]
+        : [...customs, entry],
+      action,
+      entry.name
     )
     setForm(emptyCustom)
     setEditingId(null)
+  }
+
+  const saveDoc = () => {
+    const updated = {
+      content: docDraft,
+      updatedBy: author.trim() || 'unbekannt',
+      updatedAt: new Date().toISOString(),
+    }
+    const next = { ...docs, [activeDoc]: updated }
+    setDocs(next)
+    setDocEditing(false)
+    const label = activeDoc === 'konzept' ? 'DR-Konzept' : 'DR-Plan'
+    addAudit(activeDoc, `${label} manuell bearbeitet`, meta.projekt || label)
+    if (ghToken.trim()) {
+      pushDocuments(next, ghToken.trim()).catch((err) =>
+        setSyncMsg(err.message || 'Speichern des Dokuments fehlgeschlagen.')
+      )
+    }
+  }
+
+  const resetDoc = () => {
+    const next = { ...docs }
+    delete next[activeDoc]
+    setDocs(next)
+    setDocEditing(false)
+    const label = activeDoc === 'konzept' ? 'DR-Konzept' : 'DR-Plan'
+    addAudit(activeDoc, `${label} auf Generierung zurückgesetzt`, meta.projekt || label)
+    if (ghToken.trim()) {
+      pushDocuments(next, ghToken.trim()).catch((err) =>
+        setSyncMsg(err.message || 'Zurücksetzen fehlgeschlagen.')
+      )
+    }
   }
 
   const editCustom = (c) => {
@@ -241,6 +340,7 @@ export default function App() {
   const resetCatalogEntry = (id) => {
     const next = customs.filter((c) => c.id !== id)
     setSelected((prev) => prev.filter((x) => x !== id))
+    const name = all.find((c) => c.id === id)?.name ?? id
     if (ghToken.trim()) {
       setCustoms(next)
       setSyncMsg('Zurücksetzen im Repository läuft…')
@@ -248,18 +348,21 @@ export default function App() {
         .then((merged) => {
           setCustoms(merged)
           setSyncMsg('Katalog-Eintrag auf Original zurückgesetzt ✓')
+          addAudit('component', 'Katalog-Eintrag zurückgesetzt', name)
         })
         .catch((err) =>
           setSyncMsg(err.message || 'Zurücksetzen im Repository fehlgeschlagen.')
         )
     } else {
       setCustoms(next)
+      addAudit('component', 'Katalog-Eintrag zurückgesetzt', name)
     }
   }
 
   const removeCustom = (id) => {
     const next = customs.filter((c) => c.id !== id)
     setSelected((prev) => prev.filter((x) => x !== id))
+    const name = customs.find((c) => c.id === id)?.name ?? id
     if (ghToken.trim()) {
       setCustoms(next)
       setSyncMsg('Löschen im Repository läuft…')
@@ -267,12 +370,14 @@ export default function App() {
         .then((merged) => {
           setCustoms(merged)
           setSyncMsg('Komponente im Repository gelöscht ✓')
+          addAudit('component', 'Komponente gelöscht', name)
         })
         .catch((err) =>
           setSyncMsg(err.message || 'Löschen im Repository fehlgeschlagen.')
         )
     } else {
       setCustoms(next)
+      addAudit('component', 'Komponente gelöscht', name)
     }
     if (editingId === id) {
       setEditingId(null)
@@ -409,6 +514,15 @@ export default function App() {
               </label>
               <label>
                 Modell: mistral-small-latest (fix eingestellt)
+              </label>
+              <label>
+                Autor (für den Audit-Trail)
+                <input
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder="z. B. Max Mustermann"
+                  autoComplete="off"
+                />
               </label>
               <label>
                 GitHub-Token für dauerhafte Speicherung (optional, bleibt nur lokal im Browser)
@@ -654,24 +768,105 @@ export default function App() {
                 DR-Plan (Management)
               </button>
             </div>
-            <button
-              className="primary"
-              disabled={selectedComponents.length === 0}
-              onClick={() =>
-                download(
-                  activeDoc === 'konzept'
-                    ? `${slug}-dr-konzept.md`
-                    : `${slug}-dr-plan.md`,
-                  currentDoc
-                )
-              }
-            >
-              Als Markdown herunterladen
-            </button>
+            <span className="toolbar-actions">
+              {!docEditing && (
+                <button
+                  className="secondary"
+                  onClick={() => {
+                    setDocDraft(currentDoc)
+                    setDocEditing(true)
+                  }}
+                >
+                  {docs[activeDoc] ? 'Bearbeitete Fassung ändern' : 'Ganzes Dokument bearbeiten'}
+                </button>
+              )}
+              {!docEditing && docs[activeDoc] && (
+                <button className="secondary" onClick={resetDoc}>
+                  Generierte Fassung wiederherstellen
+                </button>
+              )}
+              {docEditing && (
+                <>
+                  <button className="primary" onClick={saveDoc}>
+                    Fassung speichern
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() => setDocEditing(false)}
+                  >
+                    Abbrechen
+                  </button>
+                </>
+              )}
+              <button
+                className="primary"
+                disabled={selectedComponents.length === 0 && !docs[activeDoc]}
+                onClick={() =>
+                  download(
+                    activeDoc === 'konzept'
+                      ? `${slug}-dr-konzept.md`
+                      : `${slug}-dr-plan.md`,
+                    currentDoc
+                  )
+                }
+              >
+                Als Markdown herunterladen
+              </button>
+            </span>
           </div>
-          <div className="doc-scroll">
-            <MarkdownView markdown={currentDoc} />
-          </div>
+          {docs[activeDoc] && !docEditing && (
+            <p className="hint">
+              Manuell geändert am{' '}
+              {new Date(docs[activeDoc].updatedAt).toLocaleString('de-DE')} von{' '}
+              {docs[activeDoc].updatedBy} – die Generierung ist deaktiviert,
+              bis die generierte Fassung wiederhergestellt wird.
+            </p>
+          )}
+          {docEditing ? (
+            <textarea
+              className="doc-editor"
+              value={docDraft}
+              onChange={(e) => setDocDraft(e.target.value)}
+              rows={24}
+            />
+          ) : (
+            <div className="doc-scroll">
+              <MarkdownView markdown={currentDoc} />
+            </div>
+          )}
+          <details className="settings audit-trail">
+            <summary>Audit-Trail ({audit.length} Einträge)</summary>
+            {[
+              { key: 'component', label: 'Komponenten-Änderungen' },
+              { key: 'konzept', label: 'DR-Konzept-Änderungen' },
+              { key: 'plan', label: 'DR-Plan-Änderungen' },
+            ].map((group) => {
+              const entries = audit
+                .filter((a) => a.type === group.key)
+                .slice()
+                .sort((x, y) => new Date(y.ts) - new Date(x.ts))
+              return (
+                <div key={group.key}>
+                  <h4 className="custom-list-heading">{group.label}</h4>
+                  {entries.length === 0 && (
+                    <p className="hint">Noch keine Einträge.</p>
+                  )}
+                  <ul className="audit-list">
+                    {entries.map((a, idx) => (
+                      <li key={a.id}>
+                        <strong>v{entries.length - idx}</strong>
+                        <span>{a.action}</span>
+                        {a.subject && <em>{a.subject}</em>}
+                        <small>
+                          {a.author} · {new Date(a.ts).toLocaleString('de-DE')}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+          </details>
         </section>
       </main>
     </div>

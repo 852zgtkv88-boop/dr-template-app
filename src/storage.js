@@ -1,7 +1,11 @@
 const REPO = '852zgtkv88-boop/dr-template-app'
-const FILE_PATH = 'custom-components.json'
 const BRANCH = 'main'
-const API_URL = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`
+const FILES = {
+  components: 'custom-components.json',
+  audit: 'audit-trail.json',
+  documents: 'documents.json',
+}
+const API_BASE = `https://api.github.com/repos/${REPO}/contents`
 
 function toBase64(text) {
   const bytes = new TextEncoder().encode(text)
@@ -26,45 +30,30 @@ function isValidComponent(c) {
   )
 }
 
-export async function fetchRemoteComponents(token) {
+async function fetchRepoFile(path, token) {
   try {
     const headers = { Accept: 'application/vnd.github.raw+json' }
     if (token) headers.Authorization = `Bearer ${token}`
-    const res = await fetch(`${API_URL}?ref=${BRANCH}&t=${Date.now()}`, {
+    const res = await fetch(`${API_BASE}/${path}?ref=${BRANCH}&t=${Date.now()}`, {
       headers,
     })
-    if (!res.ok) return []
-    const data = await res.json()
-    return Array.isArray(data) ? data.filter(isValidComponent) : []
+    if (!res.ok) return null
+    return await res.json()
   } catch {
-    return []
+    return null
   }
 }
 
-export function mergeComponents(remote, local) {
-  const byId = new Map(remote.map((c) => [c.id, c]))
-  for (const c of local) byId.set(c.id, c)
-  return [...byId.values()]
-}
-
-export async function syncCustomComponents(local, token, removedIds = []) {
-  const remote = await fetchRemoteComponents(token)
-  const merged = mergeComponents(remote, local).filter(
-    (c) => !removedIds.includes(c.id)
-  )
-  await pushRemoteComponents(merged, token)
-  return merged
-}
-
-export async function pushRemoteComponents(components, token) {
+async function pushRepoFile(path, data, token, message) {
   const headers = {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
     'Content-Type': 'application/json',
   }
+  const url = `${API_BASE}/${path}`
 
   let sha
-  const existing = await fetch(`${API_URL}?ref=${BRANCH}`, { headers })
+  const existing = await fetch(`${url}?ref=${BRANCH}`, { headers })
   if (existing.ok) {
     sha = (await existing.json()).sha
   } else if (existing.status !== 404) {
@@ -74,13 +63,13 @@ export async function pushRemoteComponents(components, token) {
   }
 
   const body = {
-    message: 'Eigene DR-Komponenten aktualisieren',
+    message,
     branch: BRANCH,
-    content: toBase64(JSON.stringify(components, null, 2)),
+    content: toBase64(JSON.stringify(data, null, 2)),
   }
   if (sha) body.sha = sha
 
-  const res = await fetch(API_URL, {
+  const res = await fetch(url, {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),
@@ -98,4 +87,42 @@ export async function pushRemoteComponents(components, token) {
     }
     throw new Error(`GitHub: Speichern fehlgeschlagen (HTTP ${res.status}).`)
   }
+}
+
+export async function fetchRemoteComponents(token) {
+  const data = await fetchRepoFile(FILES.components, token)
+  return Array.isArray(data) ? data.filter(isValidComponent) : []
+}
+
+export function mergeComponents(remote, local) {
+  const byId = new Map(remote.map((c) => [c.id, c]))
+  for (const c of local) byId.set(c.id, c)
+  return [...byId.values()]
+}
+
+export async function syncCustomComponents(local, token, removedIds = []) {
+  const remote = await fetchRemoteComponents(token)
+  const merged = mergeComponents(remote, local).filter(
+    (c) => !removedIds.includes(c.id)
+  )
+  await pushRepoFile(FILES.components, merged, token, 'Eigene DR-Komponenten aktualisieren')
+  return merged
+}
+
+export async function fetchAuditTrail(token) {
+  const data = await fetchRepoFile(FILES.audit, token)
+  return Array.isArray(data) ? data : []
+}
+
+export async function pushAuditTrail(entries, token) {
+  await pushRepoFile(FILES.audit, entries, token, 'Audit-Trail aktualisieren')
+}
+
+export async function fetchDocuments(token) {
+  const data = await fetchRepoFile(FILES.documents, token)
+  return data && typeof data === 'object' && !Array.isArray(data) ? data : {}
+}
+
+export async function pushDocuments(docs, token) {
+  await pushRepoFile(FILES.documents, docs, token, 'DR-Dokumente aktualisieren')
 }
