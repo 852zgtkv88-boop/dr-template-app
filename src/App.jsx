@@ -82,6 +82,8 @@ export default function App() {
   const [docs, setDocs] = useState({})
   const [docEditing, setDocEditing] = useState(false)
   const [docDraft, setDocDraft] = useState('')
+  const [formReason, setFormReason] = useState('')
+  const [docReason, setDocReason] = useState('')
 
   useEffect(() => {
     localStorage.setItem(AUTHOR_STORAGE, author)
@@ -212,7 +214,7 @@ export default function App() {
     }
   }
 
-  const addAudit = (type, action, subject) => {
+  const addAudit = (type, action, subject, reason = '') => {
     const entry = {
       id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       ts: new Date().toISOString(),
@@ -220,6 +222,7 @@ export default function App() {
       type,
       action,
       subject,
+      reason: reason.trim(),
     }
     const next = [entry, ...audit]
     setAudit(next)
@@ -228,7 +231,7 @@ export default function App() {
     }
   }
 
-  const persistCustoms = (next, action, subject) => {
+  const persistCustoms = (next, action, subject, reason = '') => {
     setCustoms(next)
     if (ghToken.trim()) {
       setSyncMsg('Speichern im Repository läuft…')
@@ -238,13 +241,13 @@ export default function App() {
           setSyncMsg(
             `Komponenten im Repository gespeichert ✓ (${merged.length} gesamt, mit bestehenden zusammengeführt)`
           )
-          addAudit('component', action, subject)
+          addAudit('component', action, subject, reason)
         })
         .catch((err) =>
           setSyncMsg(err.message || 'Speichern im Repository fehlgeschlagen.')
         )
     } else {
-      addAudit('component', action, subject)
+      addAudit('component', action, subject, reason)
     }
   }
 
@@ -284,9 +287,11 @@ export default function App() {
           : [...customs, entry]
         : [...customs, entry],
       action,
-      entry.name
+      entry.name,
+      formReason
     )
     setForm(emptyCustom)
+    setFormReason('')
     setEditingId(null)
   }
 
@@ -300,7 +305,13 @@ export default function App() {
     setDocs(next)
     setDocEditing(false)
     const label = activeDoc === 'konzept' ? 'DR-Konzept' : 'DR-Plan'
-    addAudit(activeDoc, `${label} manuell bearbeitet`, meta.projekt || label)
+    addAudit(
+      activeDoc,
+      `${label} manuell bearbeitet`,
+      meta.projekt || label,
+      docReason
+    )
+    setDocReason('')
     if (ghToken.trim()) {
       pushDocuments(next, ghToken.trim()).catch((err) =>
         setSyncMsg(err.message || 'Speichern des Dokuments fehlgeschlagen.')
@@ -314,7 +325,8 @@ export default function App() {
     setDocs(next)
     setDocEditing(false)
     const label = activeDoc === 'konzept' ? 'DR-Konzept' : 'DR-Plan'
-    addAudit(activeDoc, `${label} auf Generierung zurückgesetzt`, meta.projekt || label)
+    const reason = window.prompt('Änderungsgrund (für den Audit-Trail, optional):') ?? ''
+    addAudit(activeDoc, `${label} auf Generierung zurückgesetzt`, meta.projekt || label, reason)
     if (ghToken.trim()) {
       pushDocuments(next, ghToken.trim()).catch((err) =>
         setSyncMsg(err.message || 'Zurücksetzen fehlgeschlagen.')
@@ -341,6 +353,7 @@ export default function App() {
     const next = customs.filter((c) => c.id !== id)
     setSelected((prev) => prev.filter((x) => x !== id))
     const name = all.find((c) => c.id === id)?.name ?? id
+    const reason = window.prompt('Änderungsgrund (für den Audit-Trail, optional):') ?? ''
     if (ghToken.trim()) {
       setCustoms(next)
       setSyncMsg('Zurücksetzen im Repository läuft…')
@@ -348,14 +361,14 @@ export default function App() {
         .then((merged) => {
           setCustoms(merged)
           setSyncMsg('Katalog-Eintrag auf Original zurückgesetzt ✓')
-          addAudit('component', 'Katalog-Eintrag zurückgesetzt', name)
+          addAudit('component', 'Katalog-Eintrag zurückgesetzt', name, reason)
         })
         .catch((err) =>
           setSyncMsg(err.message || 'Zurücksetzen im Repository fehlgeschlagen.')
         )
     } else {
       setCustoms(next)
-      addAudit('component', 'Katalog-Eintrag zurückgesetzt', name)
+      addAudit('component', 'Katalog-Eintrag zurückgesetzt', name, reason)
     }
   }
 
@@ -363,6 +376,7 @@ export default function App() {
     const next = customs.filter((c) => c.id !== id)
     setSelected((prev) => prev.filter((x) => x !== id))
     const name = customs.find((c) => c.id === id)?.name ?? id
+    const reason = window.prompt('Änderungsgrund (für den Audit-Trail, optional):') ?? ''
     if (ghToken.trim()) {
       setCustoms(next)
       setSyncMsg('Löschen im Repository läuft…')
@@ -370,14 +384,14 @@ export default function App() {
         .then((merged) => {
           setCustoms(merged)
           setSyncMsg('Komponente im Repository gelöscht ✓')
-          addAudit('component', 'Komponente gelöscht', name)
+          addAudit('component', 'Komponente gelöscht', name, reason)
         })
         .catch((err) =>
           setSyncMsg(err.message || 'Löschen im Repository fehlgeschlagen.')
         )
     } else {
       setCustoms(next)
-      addAudit('component', 'Komponente gelöscht', name)
+      addAudit('component', 'Komponente gelöscht', name, reason)
     }
     if (editingId === id) {
       setEditingId(null)
@@ -614,6 +628,14 @@ export default function App() {
                 placeholder={'Failover-Status prüfen lassen\nAnwendungen neu verbinden\nFachbereich abnehmen lassen'}
               />
             </label>
+            <label>
+              Änderungsgrund (für den Audit-Trail, optional)
+              <input
+                value={formReason}
+                onChange={(e) => setFormReason(e.target.value)}
+                placeholder="z. B. Review-Anpassung nach Audit"
+              />
+            </label>
             {form.confidence !== null && (
               <p
                 className={`confidence ${
@@ -823,12 +845,22 @@ export default function App() {
             </p>
           )}
           {docEditing ? (
-            <textarea
-              className="doc-editor"
-              value={docDraft}
-              onChange={(e) => setDocDraft(e.target.value)}
-              rows={24}
-            />
+            <>
+              <label className="doc-reason">
+                Änderungsgrund (für den Audit-Trail, optional)
+                <input
+                  value={docReason}
+                  onChange={(e) => setDocReason(e.target.value)}
+                  placeholder="z. B. Ergänzung der Eskalationswege nach Review"
+                />
+              </label>
+              <textarea
+                className="doc-editor"
+                value={docDraft}
+                onChange={(e) => setDocDraft(e.target.value)}
+                rows={24}
+              />
+            </>
           ) : (
             <div className="doc-scroll">
               <MarkdownView markdown={currentDoc} />
@@ -857,6 +889,9 @@ export default function App() {
                         <strong>v{entries.length - idx}</strong>
                         <span>{a.action}</span>
                         {a.subject && <em>{a.subject}</em>}
+                        {a.reason && (
+                          <em className="audit-reason">Grund: {a.reason}</em>
+                        )}
                         <small>
                           {a.author} · {new Date(a.ts).toLocaleString('de-DE')}
                         </small>
