@@ -214,7 +214,9 @@ export default function App() {
     }
     persistCustoms(
       editingId
-        ? customs.map((c) => (c.id === editingId ? entry : c))
+        ? customs.some((c) => c.id === editingId)
+          ? customs.map((c) => (c.id === editingId ? entry : c))
+          : [...customs, entry]
         : [...customs, entry]
     )
     setForm(emptyCustom)
