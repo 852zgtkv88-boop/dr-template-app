@@ -234,8 +234,22 @@ export default function App() {
   }
 
   const removeCustom = (id) => {
-    persistCustoms(customs.filter((c) => c.id !== id))
+    const next = customs.filter((c) => c.id !== id)
     setSelected((prev) => prev.filter((x) => x !== id))
+    if (ghToken.trim()) {
+      setCustoms(next)
+      setSyncMsg('Löschen im Repository läuft…')
+      syncCustomComponents(next, ghToken.trim(), [id])
+        .then((merged) => {
+          setCustoms(merged)
+          setSyncMsg('Komponente im Repository gelöscht ✓')
+        })
+        .catch((err) =>
+          setSyncMsg(err.message || 'Löschen im Repository fehlgeschlagen.')
+        )
+    } else {
+      setCustoms(next)
+    }
     if (editingId === id) {
       setEditingId(null)
       setForm(emptyCustom)

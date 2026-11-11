@@ -47,9 +47,11 @@ export function mergeComponents(remote, local) {
   return [...byId.values()]
 }
 
-export async function syncCustomComponents(local, token) {
+export async function syncCustomComponents(local, token, removedIds = []) {
   const remote = await fetchRemoteComponents(token)
-  const merged = mergeComponents(remote, local)
+  const merged = mergeComponents(remote, local).filter(
+    (c) => !removedIds.includes(c.id)
+  )
   await pushRemoteComponents(merged, token)
   return merged
 }
