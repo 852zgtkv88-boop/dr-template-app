@@ -8,7 +8,7 @@ import {
   mergeComponents,
   syncCustomComponents,
   fetchAuditTrail,
-  pushAuditTrail,
+  appendAuditEntry,
   fetchDocuments,
   pushDocuments,
 } from './storage.js'
@@ -227,10 +227,11 @@ export default function App() {
       subject,
       reason: reason.trim(),
     }
-    const next = [entry, ...audit]
-    setAudit(next)
+    setAudit((prev) =>
+      prev.some((a) => a.id === entry.id) ? prev : [entry, ...prev]
+    )
     if (ghToken.trim()) {
-      pushAuditTrail(next, ghToken.trim()).catch(() => {})
+      appendAuditEntry(entry, ghToken.trim()).catch(() => {})
     }
   }
 
@@ -871,6 +872,10 @@ export default function App() {
           )}
           <details className="settings audit-trail">
             <summary>Audit-Trail ({audit.length} Einträge)</summary>
+            <p className="hint">
+              Audit-Einträge sind unveränderbar: Sie werden nur hinzugefügt
+              und können weder bearbeitet noch gelöscht werden (Append-only).
+            </p>
             {[
               { key: 'component', label: 'Komponenten-Änderungen' },
               { key: 'konzept', label: 'DR-Konzept-Änderungen' },
