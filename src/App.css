@@ -417,3 +417,83 @@ em.conf-mid {
 em.conf-low {
   color: #b3261e;
 }
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.doc-editor {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: #fbfcfd;
+}
+
+.audit-trail {
+  margin-top: 0.75rem;
+}
+
+.audit-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0.75rem;
+  display: grid;
+  gap: 0.3rem;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.audit-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.5rem;
+  align-items: baseline;
+  font-size: 0.8rem;
+  border-bottom: 1px dashed var(--border);
+  padding: 0.25rem 0;
+}
+
+.audit-list li strong {
+  color: var(--accent);
+  font-size: 0.75rem;
+}
+
+.audit-list li span {
+  color: #1c2b36;
+}
+
+.audit-list li em {
+  grid-column: 2;
+  font-style: normal;
+  color: #5a6b7b;
+  font-size: 0.78rem;
+}
+
+.audit-list li small {
+  grid-column: 2;
+  color: #8a97a5;
+}
+
+.doc-reason {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #5a6b7b;
+  margin-bottom: 0.5rem;
+}
+
+.audit-reason {
+  grid-column: 2;
+  color: #9a6700;
+  background: #fff8c5;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  width: fit-content;
+}

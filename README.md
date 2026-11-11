@@ -34,3 +34,8 @@ Eigene Komponenten werden immer lokal im Browser (localStorage) gespeichert. Fü
 - Dafür einmalig einen GitHub-Token hinterlegen (Abschnitt „KI-Discovery“): ein fein abgestimmter Token (fine-grained) mit **Contents: Read and write** für dieses Repository, erstellbar unter [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens/new).
 - Jedes Speichern/Bearbeiten/Löschen einer eigenen Komponente schreibt dann die vollständige Liste ins Repository (mit Versionshistorie); der Token bleibt nur lokal im Browser.
 - Beim App-Start werden Komponenten aus dem Repository automatisch geladen und mit den lokalen zusammengeführt – so stehen sie dauerhaft und auch für Kollegen zur Verfügung.
+
+## Audit-Trail und editierbare Dokumente
+
+- **Audit-Trail** (unter der Dokumentvorschau, aufklappbar): jede Änderung wird mit Autor, Datum/Zeitstempel und Versionsnummer festgehalten, getrennt nach Komponenten-Änderungen, DR-Konzept-Änderungen und DR-Plan-Änderungen. Der Autor wird einmalig in den Einstellungen hinterlegt. Mit GitHub-Token wird der Audit-Trail dauerhaft in `audit-trail.json` im Repository gespeichert.
+- **DR-Konzept und DR-Plan sind als Ganzes editierbar**: Button „Ganzes Dokument bearbeiten“ öffnet den Markdown-Editor mit dem aktuellen Stand; die gespeicherte Fassung ersetzt die Generierung (inkl. Download), bis sie über „Generierte Fassung wiederherstellen“ zurückgesetzt wird. Bearbeitete Dokumente werden mit GitHub-Token in `documents.json` im Repository persistiert.
