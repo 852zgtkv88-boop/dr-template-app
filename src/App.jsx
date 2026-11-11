@@ -149,10 +149,13 @@ export default function App() {
   }, [customs])
 
   const konzept = useMemo(
-    () => generateKonzept(meta, selected, customs),
-    [meta, selected, customs]
+    () => generateKonzept(meta, selected, customs, audit),
+    [meta, selected, customs, audit]
   )
-  const plan = useMemo(() => generatePlan(meta, selected, customs), [meta, selected, customs])
+  const plan = useMemo(
+    () => generatePlan(meta, selected, customs, audit),
+    [meta, selected, customs, audit]
+  )
   const generatedDoc = activeDoc === 'konzept' ? konzept : plan
   const currentDoc = docs[activeDoc]?.content ?? generatedDoc
 

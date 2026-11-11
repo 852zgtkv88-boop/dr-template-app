@@ -5,7 +5,28 @@ const fmtDate = (iso) => {
   return iso
 }
 
-export function generateKonzept(meta, selectedIds, customComponents = []) {
+function auditTable(lines, entries) {
+  const sorted = entries
+    .filter((e) => e && e.ts)
+    .sort((a, b) => new Date(a.ts) - new Date(b.ts))
+  if (sorted.length === 0) {
+    lines.push('Bisher keine Einträge.')
+    lines.push('')
+    return
+  }
+  lines.push('| Version | Datum | Autor | Änderung | Änderungsgrund |')
+  lines.push('|---|---|---|---|---|')
+  sorted.forEach((e, i) => {
+    const changed = [e.action, e.subject].filter(Boolean).join(' – ')
+    const ts = String(e.ts).slice(0, 16).replace('T', ' ')
+    lines.push(
+      `| v${i + 1} | ${ts} | ${e.author ?? 'unbekannt'} | ${changed} | ${e.reason || '–'} |`
+    )
+  })
+  lines.push('')
+}
+
+export function generateKonzept(meta, selectedIds, customComponents = [], audit = []) {
   const all = [...catalog, ...customComponents]
   const sel = selectedIds
     .map((id) => all.find((c) => c.id === id))
@@ -74,10 +95,18 @@ export function generateKonzept(meta, selectedIds, customComponents = []) {
   lines.push('- Zugehöriger DR-Plan (Management-Sicht): siehe separates Dokument.')
   lines.push('- Produktdokumentation der Hersteller: siehe Abschnitt 3 je Komponente.')
   lines.push('')
+  lines.push('## 6. Änderungshistorie')
+  lines.push('')
+  lines.push('### 6.1 Komponenten-Änderungen')
+  lines.push('')
+  auditTable(lines, audit.filter((a) => a.type === 'component'))
+  lines.push('### 6.2 DR-Konzept-Änderungen')
+  lines.push('')
+  auditTable(lines, audit.filter((a) => a.type === 'konzept'))
   return lines.join('\n')
 }
 
-export function generatePlan(meta, selectedIds, customComponents = []) {
+export function generatePlan(meta, selectedIds, customComponents = [], audit = []) {
   const all = [...catalog, ...customComponents]
   const sel = selectedIds
     .map((id) => all.find((c) => c.id === id))
@@ -144,5 +173,10 @@ export function generatePlan(meta, selectedIds, customComponents = []) {
   lines.push(`- Der tolerierte Datenverlust darf das RPO (${meta.rpo}) nicht überschreiten.`)
   lines.push('- Alle kritischen Anwendungsfunktionen sind durch die Fachbereiche abgenommen.')
   lines.push('')
+  lines.push('## 6. Änderungshistorie')
+  lines.push('')
+  lines.push('### 6.1 DR-Plan-Änderungen')
+  lines.push('')
+  auditTable(lines, audit.filter((a) => a.type === 'plan'))
   return lines.join('\n')
 }
