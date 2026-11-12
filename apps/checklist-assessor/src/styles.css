@@ -1,0 +1,16 @@
+ .upload-button.secondary-upload {
+  margin-top: 0.65rem;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.small-note {
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.control-group {
+  display: inline-block;
+  margin-top: 0.4rem;
+  color: #64748b;
+}
